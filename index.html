@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mondkalender</title>
+<meta name="description" content="Günstige Tage nach dem Mondkalender für Körperpflege, Haushalt und Garten.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mondkalender">
+<meta name="theme-color" content="#eef0f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1222" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+/* Layout: App mit Tab-Leiste unten. "Heute" = Tagesblatt mit Kategorien, "Planer" = Monatsraster je Tätigkeit. */
+:root{
+  --bg:#eef0f4; --paper:#f9fafc; --ink:#1d2340; --muted:#5c6382; --line:#d5d9e4;
+  --accent:#2f4bb0; --accent-soft:#e0e6f8; --bar:#f9fafcee;
+  --l2:#6cc72e; --l2-ink:#2f6d0c; --l1:#1f8a46; --l1-ink:#1f7a3f; --m1:#d9772f; --m1-ink:#b45a1a; --m2:#d63a2b; --m2-ink:#c22a1c;
+  --moon-lit:#f2d98a; --moon-dark:#3a4163;
+  --display:"IM Fell English","Iowan Old Style",Georgia,serif;
+  --body:"Atkinson Hyperlegible",-apple-system,"Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1222; --paper:#161b30; --ink:#e6e9f5; --muted:#9aa1c0; --line:#2b3150; --accent:#9db0ff; --accent-soft:#25305a; --bar:#161b30ee;
+  --l2:#86d84f; --l2-ink:#a6e874; --l1:#2ea35b; --l1-ink:#6fd39a; --m1:#e08a46; --m1-ink:#f0a46a; --m2:#e0503f; --m2-ink:#ff8577;
+  --moon-lit:#f5e2a3; --moon-dark:#2a3050; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1222; --paper:#161b30; --ink:#e6e9f5; --muted:#9aa1c0; --line:#2b3150; --accent:#9db0ff; --accent-soft:#25305a; --bar:#161b30ee;
+  --l2:#86d84f; --l2-ink:#a6e874; --l1:#2ea35b; --l1-ink:#6fd39a; --m1:#e08a46; --m1-ink:#f0a46a; --m2:#e0503f; --m2-ink:#ff8577;
+  --moon-lit:#f5e2a3; --moon-dark:#2a3050; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px calc(90px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.top h1{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:0;line-height:1.1;text-wrap:balance}
+.navbtn{border:1px solid var(--line);background:var(--paper);border-radius:10px;min-width:40px;height:40px;padding:0 10px}
+.datebar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.datebar .d{font-family:var(--display);font-size:1.5rem;text-align:center;flex:1;min-width:0}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px}
+.moonrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--paper);font-size:1.6rem;font-family:"Apple Symbols","Segoe UI Symbol",sans-serif}
+.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:7px 16px;margin:14px 0 0}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;font-weight:700}
+.seg{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
+.seg button{flex:0 0 auto;background:none;border:0;padding:9px 12px;border-bottom:3px solid transparent;color:var(--muted)}
+.seg button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);font-weight:700}
+.groups{display:flex;flex-direction:column;gap:14px;padding-top:12px}
+.groups h3{margin:0 0 3px;font-size:1rem}
+.groups p{margin:0}
+.c2{color:var(--l2-ink)}.c1{color:var(--l1-ink)}.cm1{color:var(--m1-ink)}.cm2{color:var(--m2-ink)}
+.ann{font-size:.72rem;color:var(--muted);border:1px dashed var(--line);border-radius:4px;padding:0 4px;margin-left:3px;white-space:nowrap}
+.empty{color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.field select{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:10px;width:100%}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.form{grid-template-columns:1fr}}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow div{text-align:center;font-size:.72rem;color:var(--muted);padding-bottom:4px}
+.cell{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 0;font-variant-numeric:tabular-nums}
+.dot{width:38px;height:38px;max-width:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.cell.v2 .dot{background:var(--l2);color:#fff}.cell.v1 .dot{background:var(--l1);color:#fff}
+.cell.vm1 .dot{background:var(--m1);color:#fff}.cell.vm2 .dot{background:var(--m2);color:#fff}
+.cell.today .dot{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.cell .ph{height:14px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.78rem;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.next{list-style:none;margin:8px 0 0;padding:0}
+.next li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.next button{background:none;border:0;padding:0;font-weight:700;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;text-align:left}
+h2{font-family:var(--display);font-weight:400;font-size:1.35rem;margin:0}
+.status{font-size:.82rem;color:var(--muted);margin:8px 0 0}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--bar);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:5}
+.tabbar button{flex:0 1 160px;background:none;border:0;border-radius:10px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.78rem;color:var(--muted)}
+.tabbar button[aria-pressed="true"]{color:var(--accent);font-weight:700}
+.tabbar svg{width:24px;height:24px}
+.note{font-size:.8rem;color:var(--muted);line-height:1.5}
+.note p{margin:0 0 8px}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Mondkalender</h1><button class="navbtn" id="goToday">Heute</button></div>
+
+  <div id="viewToday">
+    <div class="datebar">
+      <button class="navbtn" id="dPrev" aria-label="Vorheriger Tag">‹</button>
+      <div class="d" id="dLabel"></div>
+      <button class="navbtn" id="dNext" aria-label="Nächster Tag">›</button>
+    </div>
+    <section class="sheet" id="dayCard" style="margin-top:12px"></section>
+    <section class="sheet" style="margin-top:14px">
+      <div class="seg" id="catTabs" role="toolbar" aria-label="Kategorie"></div>
+      <div class="groups" id="groups"></div>
+    </section>
+  </div>
+
+  <div id="viewPlan" hidden>
+    <section class="sheet">
+      <div class="form">
+        <div class="field"><label for="selCat">Kategorie</label><select id="selCat"></select></div>
+        <div class="field"><label for="selAct">Tätigkeit</label><select id="selAct"></select></div>
+      </div>
+      <p class="status" id="actStatus"></p>
+    </section>
+    <section class="sheet" style="margin-top:14px">
+      <div class="datebar" style="margin-bottom:10px">
+        <button class="navbtn" id="mPrev" aria-label="Vorheriger Monat">‹</button>
+        <div class="d" id="mLabel"></div>
+        <button class="navbtn" id="mNext" aria-label="Nächster Monat">›</button>
+      </div>
+      <div class="dow"><div>M</div><div>D</div><div>M</div><div>D</div><div>F</div><div>S</div><div>S</div></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><i style="background:var(--l2)"></i>sehr günstig</span><span><i style="background:var(--l1)"></i>günstig</span>
+        <span><i style="background:var(--m1)"></i>ungünstig</span><span><i style="background:var(--m2)"></i>sehr ungünstig</span>
+      </div>
+      <p class="status">Tag antippen öffnet das Tagesblatt.</p>
+    </section>
+    <section class="sheet" style="margin-top:14px">
+      <h2 id="nextTitle">Nächste günstige Tage</h2>
+      <ul class="next" id="nextList"></ul>
+    </section>
+  </div>
+
+  <section class="note">
+    <p><b>Rechenbasis.</b> Mondstand im tropischen Tierkreis, berechnet nach Meeus. Wie in der Original-App gilt das Zeichen zu Tagesbeginn (00:00 MEZ) und die Mondphase zur Tagesmitte. Aufsteigend: Steinbock bis Zwillinge, absteigend: Krebs bis Schütze.</p>
+    <p><b>Abgleich.</b> 266 von 266 Bewertungen stimmen mit der Original-App überein: sechs Monatskalender (Oktober 2026) und vier Stichtage mit allen Kategorien. „Annahme“ markiert Tätigkeiten, die es in der Original-App nicht gibt (Rasen mähen, Mulchen) oder die an keinem Stichtag vorkamen (Nagelpflege).</p>
+    <p><b>Einordnung.</b> Die Regeln bilden die Tradition nach Paungger/Poppe ab. Eine Wirkung des Mondstands auf Haarwuchs, Pflanzen oder Bauarbeiten ist wissenschaftlich nicht belegt.</p>
+  </section>
+</div>
+
+<nav class="tabbar" aria-label="Ansicht">
+  <button id="tabToday" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 3a9 9 0 1 0 6 15A7 7 0 0 1 15 3z"/></svg>Heute</button>
+  <button id="tabPlan" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Tätigkeitsplaner</button>
+</nav>
+
+<script id="core">
+
+const RAD=Math.PI/180;
+const norm=a=>((a%360)+360)%360;
+const SIGNS=["Widder","Stier","Zwillinge","Krebs","Löwe","Jungfrau","Waage","Skorpion","Schütze","Steinbock","Wassermann","Fische"];
+const GLYPH=["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"].map(g=>g+"︎");
+const ELEM=["Feuer","Erde","Luft","Wasser"];
+const PFL=["Fruchttag","Wurzeltag","Blütentag","Blatttag"];
+const NAHR=["Eiweiß","Salz","Fett","Kohlenhydrate"];
+const KOERPER=["Kopf","Hals, Nacken","Schultern, Arme, Lunge","Brust, Magen","Herz, Kreislauf","Verdauungsorgane","Hüfte, Nieren, Blase","Geschlechtsorgane","Oberschenkel","Knie, Knochen, Haut","Unterschenkel","Füße"];
+// Meeus Tab. 47.A/B Hauptglieder: [D,M,M',F,koeff*1e-6 Grad]
+const LON=[[0,0,1,0,6288774],[2,0,-1,0,1274027],[2,0,0,0,658314],[0,0,2,0,213618],[0,1,0,0,-185116],[0,0,0,2,-114332],[2,0,-2,0,58793],[2,-1,-1,0,57066],[2,0,1,0,53322],[2,-1,0,0,45758],[0,1,-1,0,-40923],[1,0,0,0,-34720],[0,1,1,0,-30383],[2,0,0,-2,15327],[0,0,1,2,-12528],[0,0,1,-2,10980],[4,0,-1,0,10675],[0,0,3,0,10034],[4,0,-2,0,8548],[2,1,-1,0,-7888],[2,1,0,0,-6766],[1,0,-1,0,-5163],[1,1,0,0,4987],[2,-1,1,0,4036],[2,0,2,0,3994]];
+const LAT=[[0,0,0,1,5128122],[0,0,1,1,280602],[0,0,1,-1,277693],[2,0,0,-1,173237],[2,0,-1,1,55413],[2,0,-1,-1,46271],[2,0,0,1,32573],[0,0,2,1,17198]];
+function astro(date){
+  const T=(date.getTime()/86400000+2440587.5-2451545)/36525;
+  const Lp=218.3164477+481267.88123421*T, D=297.8501921+445267.1114034*T,
+        M=357.5291092+35999.0502909*T, Mp=134.9633964+477198.8675055*T, F=93.2720950+483202.0175233*T;
+  const arg=r=>(r[0]*D+r[1]*M+r[2]*Mp+r[3]*F)*RAD;
+  let lon=Lp, lat=0;
+  for(const r of LON) lon+=r[4]*1e-6*Math.sin(arg(r));
+  for(const r of LAT) lat+=r[4]*1e-6*Math.sin(arg(r));
+  lon=norm(lon);
+  const L0=280.46646+36000.76983*T;
+  const C=(1.914602-0.004817*T)*Math.sin(M*RAD)+0.019993*Math.sin(2*M*RAD)+0.000289*Math.sin(3*M*RAD);
+  const sun=norm(L0+C-0.00569);
+  const eps=(23.4393-0.013*T)*RAD;
+  const dec=Math.asin(Math.sin(lat*RAD)*Math.cos(eps)+Math.cos(lat*RAD)*Math.sin(eps)*Math.sin(lon*RAD))/RAD;
+  return {lon,sun,elong:norm(lon-sun),dec};
+}
+const signAt=d=>Math.floor(astro(d).lon/30);
+function bisect(a,b,test){ // test(a) false, test(b) true
+  for(let i=0;i<22;i++){const m=new Date((a.getTime()+b.getTime())/2); if(test(m)) b=m; else a=m;}
+  return b;
+}
+function phaseEvents(from,to){
+  const out=[], step=6*3600e3, targets=[[0,"Neumond"],[90,"Erstes Viertel"],[180,"Vollmond"],[270,"Letztes Viertel"]];
+  let t=new Date(from.getTime()-step), prev=astro(t).elong;
+  while(t<to){
+    const t2=new Date(t.getTime()+step), e=astro(t2).elong;
+    for(const [deg,name] of targets){
+      const f=x=>norm(x-deg+180)-180;
+      if(f(prev)<0 && f(e)>=0){
+        const at=bisect(t,t2,d=>f(astro(d).elong)>=0);
+        out.push({deg,name,at});
+      }
+    }
+    t=t2; prev=e;
+  }
+  return out;
+}
+function dayInfo(y,m,d){
+  const noon=new Date(y,m,d,12), a=astro(noon);
+  const s0=new Date(y,m,d,0), s1=new Date(y,m,d+1,0);
+  const sign=Math.floor(a.lon/30), sa=signAt(s0), sb=signAt(s1);
+  let change=null;
+  if(sa!==sb){const at=bisect(s0,s1,t=>signAt(t)!==sa); change={at,from:sa,to:signAt(at)};}
+  const rising=astro(new Date(noon.getTime()+3600e3)).dec>astro(new Date(noon.getTime()-3600e3)).dec;
+  return {date:noon,sign,elem:sign%4,waxing:a.elong<180,elong:a.elong,illum:(1-Math.cos(a.elong*RAD))/2,rising,dow:noon.getDay(),change};
+}
+// ---- Tagesbewertung nach der Logik der Original-App ----
+// Tageszeichen = Zeichen zu Tagesbeginn (00:00 MEZ = 23:00 UTC Vortag), kalibriert an Okt. 2026
+const ELEM_TAG=["Wärmetag","Kältetag","Licht-/Lufttag","Wassertag"];
+const ORGAN=["Sinnesorgane","Blutkreislauf","Drüsensystem","Nervensystem"];
+const ZONE=["Kopf, Gehirn, Augen, Nase","Hals, Zähne, Kehlkopf, Kiefer, Ohren","Schultern, Arme, Hände, Lunge","Brust, Lunge, Magen, Leber, Galle","Herz, Kreislauf, Zwerchfell","Verdauungsorgane, Milz, Bauchspeicheldrüse","Hüfte, Nieren, Blase","Geschlechtsorgane, Harnleiter","Oberschenkel, Venen","Knie, Knochen, Gelenke, Haut","Unterschenkel, Venen","Füße, Zehen"];
+const AUF=[9,10,11,0,1,2]; // Steinbock bis Zwillinge aufsteigend (an Original-App geprüft) 
+function dayInfoV2(y,m,d){
+  const start=new Date(Date.UTC(y,m,d,-1)); // 00:00 MEZ
+  const end=new Date(Date.UTC(y,m,d+1,-1));
+  const sign=signAt(start);
+  const evs=phaseEvents(new Date(Date.UTC(y,m,d,0)-2*3600e3),new Date(Date.UTC(y,m,d+1,0)));
+  const localDay=dt=>dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;
+  const ev=evs.filter(e=>localDay(e.at));
+  const newDay=ev.some(e=>e.deg===0), fullDay=ev.some(e=>e.deg===180);
+  const noon=astro(new Date(y,m,d,12));
+  const waxing=noon.elong<180;
+  let change=null; const sb=signAt(end);
+  if(sb!==sign){const at=bisect(start,end,t=>signAt(t)!==sign); change={at,to:signAt(at)};}
+  return {date:new Date(y,m,d,12),sign,elem:sign%4,waxing,turn:newDay||fullDay,newDay,fullDay,ph:(newDay||fullDay)?null:waxing,
+    rising:AUF.includes(sign),dow:new Date(y,m,d,12).getDay(),elong:noon.elong,illum:(1-Math.cos(noon.elong*RAD))/2,ev,change};
+}
+const abn=i=>!i.waxing, zun=i=>i.waxing, W=i=>i.elem===3;
+const cl=v=>Math.max(-2,Math.min(2,v));
+// Stufen: 2 sehr günstig, 1 günstig, 0 neutral, -1 ungünstig, -2 sehr ungünstig
+// k: "b" = an einem ganzen Monat der Original-App bestätigt, "t" = an 4 Stichtagen bestätigt, "a" = Annahme (nicht in der App)
+const CATS=[
+ {id:"g",name:"Gesundheit & Körperpflege",short:"Gesundheit",acts:[
+  {n:"Obst- und Safttage",k:"b",r:i=>i.elem===0?2:zun(i)?1:0},
+  {n:"Entschlackungskur",k:"t",r:i=>abn(i)?2:0},
+  {n:"Enthaaren",k:"t",r:i=>zun(i)||i.sign===4||i.sign===5?-1:i.sign===9?2:0},
+  {n:"Fasten zur Gesundheitsvorsorge",k:"t",r:i=>i.newDay?2:W(i)?1:0},
+  {n:"Haareschneiden",k:"b",r:i=>(i.sign===3||i.sign===11)?-2:(i.sign===4||i.sign===5)?2:zun(i)?1:0},
+  {n:"Hornhautentfernung",k:"t",r:i=>zun(i)?-2:1},
+  {n:"Sonnenbaden",k:"t",r:i=>zun(i)?-1:0},
+  {n:"Warzenbehandlung",k:"t",r:i=>zun(i)?-1:1},
+  {n:"Zahnarzttermin",k:"b",r:i=>i.sign<=1?-2:(i.newDay||i.fullDay||zun(i))?-1:(i.sign===4||i.sign===5)?2:1},
+  {n:"Nagelpflege",k:"a",r:i=>i.dow===5?2:i.sign===9?1:0},
+ ]},
+ {id:"h",name:"Haushalt",short:"Haushalt",acts:[
+  {n:"Zimmerpflanzen gießen",k:"b",r:i=>W(i)?2:i.elem===2?-1:0},
+  {n:"Betten lüften",k:"t",r:i=>cl((abn(i)?1:-1)+(W(i)?-1:0))},
+  {n:"Zimmerpflanzen düngen",k:"t",r:i=>abn(i)?1:-1},
+  {n:"Wäsche waschen",k:"t",r:i=>abn(i)?1:-1},
+  {n:"Fenster putzen",k:"b",r:i=>zun(i)?-1:i.elem===2?2:1},
+  {n:"Großer Hausputz",k:"t",r:i=>abn(i)?1:-1},
+ ]},
+ {id:"b",name:"Hausbau",short:"Hausbau",acts:[
+  {n:"Malerarbeiten",k:"t",r:i=>abn(i)?1:-1},
+ ]},
+ {id:"t",name:"Garten",short:"Garten",acts:[
+  {n:"Obst und Gemüse anbauen",k:"t",r:i=>zun(i)&&i.elem===0?1:0},
+  {n:"Düngen zur Fruchtentwicklung",k:"t",r:i=>abn(i)?2:-1},
+  {n:"Düngen zur Blattentwicklung",k:"t",r:i=>abn(i)?2:-1},
+  {n:"Düngen zur Wurzelentwicklung",k:"t",r:i=>abn(i)?2:-1},
+  {n:"Obstbäume schneiden",k:"b",r:i=>abn(i)?(i.elem===0?2:W(i)?0:1):(W(i)?-2:-1)},
+  {n:"Unkraut jäten (Beikräuter entfernen)",k:"t",r:i=>abn(i)?1:-1},
+  {n:"Umsetzen und Umtopfen",k:"t",r:i=>!i.rising?(abn(i)?2:1):(W(i)?1:-1)},
+  {n:"Rasen mähen",k:"a",r:i=>abn(i)?1:0},
+  {n:"Mulchen",k:"a",r:i=>abn(i)?((i.sign===1||i.sign===9)?2:1):0},
+ ]},
+];
+const LEVELS={2:"sehr günstig",1:"günstig",0:"neutral","-1":"ungünstig","-2":"sehr ungünstig"};
+const NOTES={"Rasen mähen":"Nicht in der Original-App. Abnehmend: wächst langsamer nach. Zunehmend: dichteres Nachwachsen.","Mulchen":"Nicht in der Original-App. Paungger/Poppe: Stier- und Steinbock-Tage bei abnehmendem Mond.","Nagelpflege":"An den Stichtagen nie aufgeführt; Freitagsregel aus Sekundärquellen.","Fasten zur Gesundheitsvorsorge":"Neumondtag als Annahme ergänzt."};
+</script>
+<script>
+const MONTHS=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const WD=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+const fmtT=d=>d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+let now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+let st={}; try{st=JSON.parse(localStorage.getItem("mk2")||"{}")}catch(e){}
+let sel=new Date(today), tab="today", cat=st.cat||"g", pCat=st.pCat||"g", pAct=st.pAct||"Haareschneiden", month={y:today.getFullYear(),m:today.getMonth()};
+const save=()=>{try{localStorage.setItem("mk2",JSON.stringify({cat,pCat,pAct}))}catch(e){}};
+const cache=new Map();
+const info=d=>{const k=d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); if(!cache.has(k)) cache.set(k,dayInfoV2(d.getFullYear(),d.getMonth(),d.getDate())); return cache.get(k);};
+const lvCls=v=>v===2?"2":v===1?"1":v===-1?"m1":v===-2?"m2":"";
+const annTag=k=>k==="a"?'<span class="ann">Annahme</span>':"";
+function moonSVG(elong,size){
+  const r=size/2-1,c=size/2,k=(1-Math.cos(elong*RAD))/2,wax=elong<180,rx=r*Math.abs(1-2*k);
+  const a1=wax?1:0,a2=wax?(k<.5?0:1):(k<.5?1:0);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r}" fill="var(--moon-dark)"/><path d="M${c} ${c-r}A${r} ${r} 0 0 ${a1} ${c} ${c+r}A${rx} ${r} 0 0 ${a2} ${c} ${c-r}Z" fill="var(--moon-lit)"/></svg>`;
+}
+function renderDay(){
+  const i=info(sel);
+  document.getElementById("dLabel").textContent=`${sel.getDate()}. ${MONTHS[sel.getMonth()]} ${sel.getFullYear()}`;
+  const phase=i.ev.length?i.ev.map(e=>e.name+" "+fmtT(e.at)).join(", "):(i.waxing?"Mond: zunehmend":"Mond: abnehmend");
+  document.getElementById("dayCard").innerHTML=`
+    <div class="moonrow">${moonSVG(i.elong,46)}<div style="flex:1;min-width:140px"><b>${phase}</b><br><span style="color:var(--muted)">${WD[sel.getDay()]} · ${Math.round(i.illum*100)} % beleuchtet</span></div>
+    <span class="badge" aria-hidden="true">${GLYPH[i.sign]}</span><b style="font-size:1.15rem">${SIGNS[i.sign]}</b></div>
+    <dl class="facts">
+      <dt>Nahrungsqualität</dt><dd>${NAHR[i.elem]}</dd>
+      <dt>Körperzone</dt><dd>${ZONE[i.sign]}</dd>
+      <dt>Pflanzenteil</dt><dd>${["Frucht","Wurzel","Blüte","Blatt"][i.elem]}</dd>
+      <dt>Element</dt><dd>${ELEM[i.elem]}</dd>
+      <dt>Organsystem</dt><dd>${ORGAN[i.elem]}</dd>
+      <dt>Tagesqualität</dt><dd>${ELEM_TAG[i.elem]}</dd>
+      <dt>Mondbahn</dt><dd>${i.rising?"aufsteigend":"absteigend"}</dd>
+      ${i.change?`<dt>Zeichenwechsel</dt><dd>ab ${fmtT(i.change.at)} ${SIGNS[i.change.to]}</dd>`:""}
+    </dl>`;
+  document.getElementById("catTabs").innerHTML=CATS.map(c=>`<button id="ct-${c.id}" data-c="${c.id}" aria-pressed="${c.id===cat}">${c.short}</button>`).join("");
+  const C=CATS.find(c=>c.id===cat), g={};
+  for(const a of C.acts){const v=a.r(i); if(v) (g[v]=g[v]||[]).push(a.n+annTag(a.k));}
+  const order=[2,1,-1,-2];
+  const html=order.filter(v=>g[v]).map(v=>`<div><h3 class="c${lvCls(v)}">${LEVELS[v]}</h3><p>${g[v].join(", ")}</p></div>`).join("");
+  document.getElementById("groups").innerHTML=html||'<p class="empty">Für diese Kategorie gibt es heute keine besonderen Empfehlungen.</p>';
+}
+function fillSelects(){
+  const sc=document.getElementById("selCat"), sa=document.getElementById("selAct");
+  sc.innerHTML=CATS.map(c=>`<option value="${c.id}"${c.id===pCat?" selected":""}>${c.name}</option>`).join("");
+  const C=CATS.find(c=>c.id===pCat);
+  if(!C.acts.some(a=>a.n===pAct)) pAct=C.acts[0].n;
+  sa.innerHTML=C.acts.map(a=>`<option${a.n===pAct?" selected":""}>${a.n}</option>`).join("");
+}
+const curAct=()=>CATS.find(c=>c.id===pCat).acts.find(a=>a.n===pAct);
+function renderPlan(){
+  fillSelects();
+  const A=curAct();
+  document.getElementById("actStatus").textContent=(A.k==="b"?"Regel an einem ganzen Monat der Original-App bestätigt.":A.k==="t"?"Regel an 4 Stichtagen der Original-App bestätigt.":"Annahme. ")+(NOTES[A.n]&&A.k!=="b"?" "+NOTES[A.n]:"");
+  const {y,m}=month;
+  document.getElementById("mLabel").textContent=MONTHS[m]+" "+y;
+  const lead=(new Date(y,m,1).getDay()+6)%7, days=new Date(y,m+1,0).getDate();
+  let h=""; for(let k=0;k<lead;k++) h+="<div></div>";
+  for(let d=1;d<=days;d++){
+    const dt=new Date(y,m,d), i=info(dt), v=A.r(i);
+    const ph=i.newDay?moonSVG(0.01,13):i.fullDay?moonSVG(180,13):"";
+    const isT=dt.getTime()===today.getTime();
+    h+=`<button class="cell${v?" v"+lvCls(v):""}${isT?" today":""}" data-t="${dt.getTime()}" aria-label="${d}. ${MONTHS[m]}: ${LEVELS[v]}"><span class="dot">${d}</span><span class="ph">${ph}</span></button>`;
+  }
+  document.getElementById("grid").innerHTML=h;
+  const list=[];
+  for(let k=0;k<90&&list.length<6;k++){const dt=new Date(today.getFullYear(),today.getMonth(),today.getDate()+k), v=A.r(info(dt)); if(v>0) list.push({dt,v});}
+  document.getElementById("nextTitle").textContent="Nächste Tage: "+A.n;
+  document.getElementById("nextList").innerHTML=list.length?list.map(x=>`<li><button data-t="${x.dt.getTime()}">${WD[x.dt.getDay()].slice(0,2)}, ${x.dt.getDate()}. ${MONTHS[x.dt.getMonth()]}</button><span class="c${lvCls(x.v)}">${LEVELS[x.v]}</span></li>`).join(""):"<li>Keine günstigen Tage in den nächsten 90 Tagen.</li>";
+}
+function show(t){
+  tab=t;
+  document.getElementById("viewToday").hidden=t!=="today";
+  document.getElementById("viewPlan").hidden=t!=="plan";
+  document.getElementById("tabToday").setAttribute("aria-pressed",t==="today");
+  document.getElementById("tabPlan").setAttribute("aria-pressed",t==="plan");
+  t==="today"?renderDay():renderPlan();
+  window.scrollTo(0,0);
+}
+const openDay=ms=>{sel=new Date(+ms); show("today");};
+document.getElementById("tabToday").onclick=()=>document.addEventListener("visibilitychange",()=>{
+  if(document.hidden) return;
+  const n=new Date(); if(n.toDateString()===today.toDateString()) return;
+  const wasToday=sel.getTime()===today.getTime();
+  now=n; today=new Date(n.getFullYear(),n.getMonth(),n.getDate()); cache.clear();
+  if(wasToday){sel=new Date(today); month={y:today.getFullYear(),m:today.getMonth()};}
+  tab==="today"?renderDay():renderPlan();
+});
+show("today");
+document.getElementById("tabPlan").onclick=()=>{month={y:sel.getFullYear(),m:sel.getMonth()}; show("plan");};
+document.getElementById("goToday").onclick=()=>{sel=new Date(today); month={y:today.getFullYear(),m:today.getMonth()}; tab==="today"?renderDay():renderPlan();};
+document.getElementById("dPrev").onclick=()=>{sel=new Date(sel.getFullYear(),sel.getMonth(),sel.getDate()-1); renderDay();};
+document.getElementById("dNext").onclick=()=>{sel=new Date(sel.getFullYear(),sel.getMonth(),sel.getDate()+1); renderDay();};
+document.getElementById("catTabs").onclick=e=>{const b=e.target.closest("button[data-c]"); if(!b) return; cat=b.dataset.c; save(); renderDay();};
+document.getElementById("selCat").onchange=e=>{pCat=e.target.value; pAct=""; save(); renderPlan();};
+document.getElementById("selAct").onchange=e=>{pAct=e.target.value; save(); renderPlan();};
+document.getElementById("mPrev").onclick=()=>{month.m--; if(month.m<0){month.m=11;month.y--} renderPlan();};
+document.getElementById("mNext").onclick=()=>{month.m++; if(month.m>11){month.m=0;month.y++} renderPlan();};
+document.getElementById("grid").onclick=e=>{const b=e.target.closest("[data-t]"); if(b) openDay(b.dataset.t);};
+document.getElementById("nextList").onclick=e=>{const b=e.target.closest("[data-t]"); if(b) openDay(b.dataset.t);};
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden) return;
+  const n=new Date(); if(n.toDateString()===today.toDateString()) return;
+  const wasToday=sel.getTime()===today.getTime();
+  now=n; today=new Date(n.getFullYear(),n.getMonth(),n.getDate()); cache.clear();
+  if(wasToday){sel=new Date(today); month={y:today.getFullYear(),m:today.getMonth()};}
+  tab==="today"?renderDay():renderPlan();
+});
+show("today");
+</script>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+</script>
+</body>
+</html>

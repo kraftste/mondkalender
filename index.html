@@ -252,16 +252,13 @@ const CATS=[
   {n:"Fenster putzen",k:"b",r:i=>zun(i)?-1:i.elem===2?2:1},
   {n:"Großer Hausputz",k:"t",r:i=>abn(i)?1:-1},
  ]},
- {id:"b",name:"Hausbau",short:"Hausbau",acts:[
-  {n:"Malerarbeiten",k:"t",r:i=>abn(i)?1:-1},
- ]},
  {id:"t",name:"Garten",short:"Garten",acts:[
   {n:"Obst und Gemüse anbauen",k:"t",r:i=>zun(i)&&i.elem===0?1:0},
   {n:"Düngen zur Fruchtentwicklung",k:"t",r:i=>abn(i)?2:-1},
   {n:"Düngen zur Blattentwicklung",k:"t",r:i=>abn(i)?2:-1},
   {n:"Düngen zur Wurzelentwicklung",k:"t",r:i=>abn(i)?2:-1},
   {n:"Obstbäume schneiden",k:"b",r:i=>abn(i)?(i.elem===0?2:W(i)?0:1):(W(i)?-2:-1)},
-  {n:"Unkraut jäten (Beikräuter entfernen)",k:"t",r:i=>abn(i)?1:-1},
+  {n:"Unkraut jäten",k:"t",r:i=>abn(i)?1:-1},
   {n:"Umsetzen und Umtopfen",k:"t",r:i=>!i.rising?(abn(i)?2:1):(W(i)?1:-1)},
   {n:"Rasen mähen",k:"a",r:i=>abn(i)?1:0},
   {n:"Mulchen",k:"a",r:i=>abn(i)?((i.sign===1||i.sign===9)?2:1):0},
@@ -276,7 +273,9 @@ const WD=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samst
 const fmtT=d=>d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
 let now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
 let st={}; try{st=JSON.parse(localStorage.getItem("mk2")||"{}")}catch(e){}
-let sel=new Date(today), tab="today", cat=st.cat||"g", pCat=st.pCat||"g", pAct=st.pAct||"Haareschneiden", month={y:today.getFullYear(),m:today.getMonth()};
+let sel=new Date(today), tab="today", cat=st.cat||"g", pCat=st.pCat||"g";
+if(!CATS.some(c=>c.id===cat)) cat="g"; if(!CATS.some(c=>c.id===pCat)) pCat="g";
+let pAct=st.pAct||"Haareschneiden", month={y:today.getFullYear(),m:today.getMonth()};
 const save=()=>{try{localStorage.setItem("mk2",JSON.stringify({cat,pCat,pAct}))}catch(e){}};
 const cache=new Map();
 const info=d=>{const k=d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); if(!cache.has(k)) cache.set(k,dayInfoV2(d.getFullYear(),d.getMonth(),d.getDate())); return cache.get(k);};
